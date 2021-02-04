@@ -1,8 +1,26 @@
+/*
+ * Copyright 2021 D'Arcy Smith + the BCIT CST Datacommunications Option students.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "fsm.h"
 
-static int annouce_winner(Environment *env);
+static int announce_winner(Environment *env);
+static int next_player(Environment *env);
+static int check(Environment *env);
 static int waitForMove(Environment *env);
 static int read(Environment *env);
 static int write(Environment *env);
@@ -12,11 +30,12 @@ _Noreturn static int error_exit(Environment *env);
 typedef enum
 {
 
-    GAME_START, // 2
+    GAME_START = FSM_APP_STATE_START, // 2
     IDLE,       // 3
     ERROR,      // 4
     VALIDATE,   // 5
     RESULT,     // 6
+    CHECKSTATE,     // 7
 } States;
 
 typedef struct
@@ -32,11 +51,14 @@ int main(int argc, char *argv[])
         {
             {FSM_INIT, GAME_START, &connect},
             {GAME_START, IDLE, &waitForMove},
-
-            {VALIDATE, IDLE, &write},
             {IDLE, VALIDATE, &read},
-            {VALIDATE, RESULT, &annouce_winner},
+            {VALIDATE, IDLE, &waitForMove},
+            
+            {VALIDATE, CHECKSTATE, &check},
+            {CHECKSTATE, RESULT, &announce_winner},
+            {CHECKSTATE, IDLE, &next_player},
             {VALIDATE, ERROR, &error_exit},
+    
             {FSM_IGNORE, FSM_IGNORE, NULL},
         };
     int code;
@@ -63,27 +85,11 @@ static int connect(Environment *env)
 {
     EchoEnvironment *echo_env;
 
-    int position = 0;
-
     echo_env = (EchoEnvironment *)env;
 
-    while (position < 1)
-    {
-        echo_env->c = getchar();
-        position = position + 1;
-    }
-    if (echo_env->c == EOF)
-    {
-        if (ferror(stdin))
-        {
-            return ERROR;
-        }
-
-        return FSM_EXIT;
-    }
 
     fprintf(stderr, "Two players have entered the game!\n");
-    return GAME_START;
+    return IDLE;
 }
 
 static int waitForMove(Environment *env)
@@ -96,6 +102,7 @@ static int waitForMove(Environment *env)
     echo_env = (EchoEnvironment *)env;
     while (position < 1)
     {
+        fprintf(stderr, "Enter input!!\n");
         echo_env->c = getchar();
         position = position + 1;
     }
@@ -110,9 +117,10 @@ static int waitForMove(Environment *env)
         return FSM_EXIT;
     }
 
-    
+    position = 0;
+    fprintf(stderr, "Time to validate the input!!\n");
 
-    return IDLE;
+    return VALIDATE;
 }
 
 static int read(Environment *env)
@@ -120,31 +128,46 @@ static int read(Environment *env)
     EchoEnvironment *echo_env;
 
     echo_env = (EchoEnvironment *)env;
-
-    return VALIDATE;
-}
-
-
-static int write(Environment *env)
-{
-    EchoEnvironment *echo_env;
-
-    echo_env = (EchoEnvironment *)env;
+   
     if (echo_env->c > 73 || echo_env->c < 65)
     {
-        return VALIDATE;
+        fprintf(stderr, "This is NOT a valid input! Try again!\n");
+        return IDLE;
     }
+    fprintf(stderr, "Input valid!\n");
 
-    return IDLE;
+    return CHECKSTATE;
 }
 
-static int annouce_winner(Environment *env)
+static int next_player(Environment *env){
+    EchoEnvironment *echo_env;
+
+    echo_env = (EchoEnvironment *)env;
+    fprintf(stderr, "Next player's turn!\n");
+
+    return IDLE;
+
+}
+
+static int check(Environment *env)
 {
     EchoEnvironment *echo_env;
 
     echo_env = (EchoEnvironment *)env;
+    fprintf(stderr, "Time to announce the winner!\n");
 
     return RESULT;
+}
+
+
+static int announce_winner(Environment *env)
+{
+    EchoEnvironment *echo_env;
+
+    echo_env = (EchoEnvironment *)env;
+    fprintf(stderr, "Player 1 wins!!\n");
+
+    return FSM_EXIT;
 }
 
 _Noreturn static int error_exit(Environment *env)
