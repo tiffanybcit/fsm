@@ -18,14 +18,14 @@
 #include <stdlib.h>
 #include "fsm.h"
 
-static int announce_winner(Environment *env);
-static int next_player(Environment *env);
+static int announceWinner(Environment *env);
+static int nextPlayer(Environment *env);
 static int check(Environment *env);
 static int waitForMove(Environment *env);
 static int read(Environment *env);
 static int write(Environment *env);
 static int connect(Environment *env);
-_Noreturn static int error_exit(Environment *env);
+_Noreturn static int errorExit(Environment *env);
 
 typedef enum
 {
@@ -55,9 +55,9 @@ int main(int argc, char *argv[])
             {VALIDATE, IDLE, &waitForMove},
             
             {VALIDATE, CHECKSTATE, &check},
-            {CHECKSTATE, RESULT, &announce_winner},
-            {CHECKSTATE, IDLE, &next_player},
-            {VALIDATE, ERROR, &error_exit},
+            {CHECKSTATE, RESULT, &announceWinner},
+            {CHECKSTATE, IDLE, &nextPlayer},
+            {VALIDATE, ERROR, &errorExit},
     
             {FSM_IGNORE, FSM_IGNORE, NULL},
         };
@@ -139,7 +139,7 @@ static int read(Environment *env)
     return CHECKSTATE;
 }
 
-static int next_player(Environment *env){
+static int nextPlayer(Environment *env){
     EchoEnvironment *echo_env;
 
     echo_env = (EchoEnvironment *)env;
@@ -160,7 +160,7 @@ static int check(Environment *env)
 }
 
 
-static int announce_winner(Environment *env)
+static int announceWinner(Environment *env)
 {
     EchoEnvironment *echo_env;
 
@@ -170,7 +170,7 @@ static int announce_winner(Environment *env)
     return FSM_EXIT;
 }
 
-_Noreturn static int error_exit(Environment *env)
+_Noreturn static int errorExit(Environment *env)
 {
     perror("Error! Disconnected!");
 

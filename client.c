@@ -18,23 +18,23 @@
 #include <stdlib.h>
 #include "fsm.h"
 
-static int printRandoms(int lower, int upper);
-static int write(Environment *env);
-static int onPlayerTurn(Environment *env);
-static int onPlayer2Turn(Environment *env);
-static int connect(Environment *env);
-static int validMove(Environment *env);
-
+static int connect_to_server(Environment *env);
+static int wait(Environment *env);
+static int write_to_server(Environment *env);
+static int close(Environment *env);
+static int end(Environment *env);
 _Noreturn static int error_exit(Environment *env);
 
 typedef enum
 {
 
     GAME_START = FSM_APP_STATE_START, // 2
-    IDLE,                             // 3
-    ERROR,                            // 4
-    PLAYERTURN,                       //5
-    PLAYER2TURN,                      //6
+    IDLE,       // 3
+    ERROR,      // 4
+    INPUT,      // 5
+    RESULT,     // 6
+    END,        // 7
+
 } States;
 
 typedef struct
@@ -48,19 +48,20 @@ int main(int argc, char *argv[])
     EchoEnvironment env;
     StateTransition transitions[] =
         {
-            {FSM_INIT, GAME_START, &connect},
-            {GAME_START, IDLE, &onPlayer2Turn},
-            {GAME_START, PLAYERTURN, &onPlayerTurn},
-            {PLAYERTURN, PLAYERTURN, &onPlayerTurn},
-            {PLAYERTURN, IDLE, &write},
-            {IDLE, PLAYERTURN, &validMove},
-            {PLAYERTURN, ERROR, &error_exit},
+            {FSM_INIT, GAME_START, &connect_to_server},
+            {GAME_START, IDLE, &wait},
+            {GAME_START, INPUT, &write_to_server},
+            {INPUT, IDLE, &wait},
+            {INPUT, INPUT, &wait},
+            {IDLE, INPUT, &write_to_server},
+            {IDLE, RESULT, &close},
+            {RESULT, END, &end},
             {FSM_IGNORE, FSM_IGNORE, NULL},
         };
     int code;
     int start_state;
     int end_state;
-    fprintf(stderr, "Press enter key\n");
+    fprintf(stderr, "Press enter key \n");
     start_state = FSM_INIT;
     end_state = GAME_START;
     code = fsm_run((Environment *)&env, &start_state, &end_state, transitions);
@@ -77,46 +78,39 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-static int printRandoms(int lower, int upper)
-{
-
-    int num = (rand() %
-               (upper - lower + 1)) +
-              lower;
-    printf("%d ", num);
-
-    return num;
-}
-
-static int connect(Environment *env)
+static int connect_to_server(Environment *env)
 {
     EchoEnvironment *echo_env;
 
     echo_env = (EchoEnvironment *)env;
 
-    fprintf(stderr, "You have entered the game!\n");
-    int random1 = printRandoms(0, 3);
-    if (random1 == 1)
-    {
-        return PLAYERTURN;
-    }
 
+    fprintf(stderr, "You have entered the game!\n");
+    
     return IDLE;
 }
 
-static int write(Environment *env)
+static int wait(Environment *env)
 {
     EchoEnvironment *echo_env;
 
+    echo_env = (EchoEnvironment *)env;
     int position = 0;
+    char *buffer = malloc(sizeof(char)*1024);
+    int c;
 
     echo_env = (EchoEnvironment *)env;
-    while (position < 1)
+    while (1)
     {
-        echo_env->c = getchar();
-        position = position+1;
+        fprintf(stderr, "Enter input!!\n");
+        c = getchar();
+        if(c == EOF || c == '\n'){
+            buffer[position] ='\0';
+            break;
+        }
+        position = position + 1;
     }
-
+    echo_env->c = buffer[0];
     if (echo_env->c == EOF)
     {
         if (ferror(stdin))
@@ -127,41 +121,48 @@ static int write(Environment *env)
         return FSM_EXIT;
     }
 
+    fprintf(stderr, "Transferring to input state!!\n");
+
+    return INPUT;
+}
+
+static int write_to_server(Environment *env)
+{
+    EchoEnvironment *echo_env;
+
+    echo_env = (EchoEnvironment *)env;
+   
     if (echo_env->c > 73 || echo_env->c < 65)
     {
-        return PLAYERTURN;
+        fprintf(stderr, "This is NOT a valid input! Try again!\n");
+        return INPUT;
     }
+    fprintf(stderr, "Input valid!\n");
 
     return IDLE;
 }
 
-static int onPlayerTurn(Environment *env)
+static int close(Environment *env)
 {
     EchoEnvironment *echo_env;
 
     echo_env = (EchoEnvironment *)env;
+   
+    
+    fprintf(stderr, "You win\n");
 
-    return IDLE;
+    return RESULT;
 }
 
-static int onPlayer2Turn(Environment *env)
+static int end(Environment *env)
 {
     EchoEnvironment *echo_env;
 
     echo_env = (EchoEnvironment *)env;
+    fprintf(stderr, "Bye bye!!\n");
 
-    return IDLE;
+    return FSM_EXIT;
 }
-
-static int validMove(Environment *env)
-{
-
-    EchoEnvironment *echo_env;
-
-    echo_env = (EchoEnvironment *)env;
-    return PLAYERTURN;
-}
-
 _Noreturn static int error_exit(Environment *env)
 {
     perror("Error! Disconnected!");
