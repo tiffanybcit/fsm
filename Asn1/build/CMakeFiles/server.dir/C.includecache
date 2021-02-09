@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/pi/Documents/asn1/fsm/Asn1/fsm.h
+
+/home/pi/Documents/asn1/fsm/Asn1/server.c
+stdio.h
+-
+stdlib.h
+-
+unistd.h
+-
+fsm.h
+/home/pi/Documents/asn1/fsm/Asn1/fsm.h
+

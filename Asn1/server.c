@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <dcfsm/fsm.h>
+#include "fsm.h"
 
 static int await_connection();
 static int read_input(Environment *env);

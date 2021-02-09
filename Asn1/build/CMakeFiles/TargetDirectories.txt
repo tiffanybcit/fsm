@@ -1,0 +1,5 @@
+/home/pi/Documents/asn1/fsm/Asn1/build/CMakeFiles/rebuild_cache.dir
+/home/pi/Documents/asn1/fsm/Asn1/build/CMakeFiles/edit_cache.dir
+/home/pi/Documents/asn1/fsm/Asn1/build/CMakeFiles/server.dir
+/home/pi/Documents/asn1/fsm/Asn1/build/CMakeFiles/lib.dir
+/home/pi/Documents/asn1/fsm/Asn1/build/CMakeFiles/client.dir

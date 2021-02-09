@@ -1,0 +1,2 @@
+/usr/bin/ar qc liblib.a  CMakeFiles/lib.dir/fsm.c.o
+/usr/bin/ranlib liblib.a
