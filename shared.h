@@ -8,4 +8,14 @@
 // /etc/services
 #define PORT 8000
 
+
+#define INVALID_MOVE "0"
+#define WAIT "1"
+#define WIN "2"
+#define LOSE "3"
+#define TIE "4"
+#define YES_TURN "5"
+#define NO_TURN "6"
+#define GAME_BEGIN "7"
+
 #endif
