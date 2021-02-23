@@ -1,16 +1,12 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.17)
 project(dcfsm C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_library(lib STATIC fsm.h fsm.c)
-target_compile_options(lib PRIVATE)
+include_directories(/usr/local/include)
+link_directories(/usr/local/lib)
 
-add_executable(client client.c)
-target_link_libraries(client lib)
-target_compile_options(client PRIVATE -Wpedantic -Wall -Wextra)
-
-add_executable(server server.c)
-target_link_libraries(server lib)
-target_compile_options(server PRIVATE -Wpedantic -Wall -Wextra)
+add_executable(server server.c shared.h)
+target_link_libraries(server dcfsm dc)
+target_compile_options(server PRIVATE -Wpedantic -Wall -Wextra -ldc)
 
